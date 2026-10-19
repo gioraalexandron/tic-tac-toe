@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Game Arcade</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #1e1e2f;
+    color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 2em 0 3em;
+  }
+  h1 {
+    margin: 0 0 0.6em;
+  }
+  #game-menu {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.6em;
+    border-bottom: 1px solid #33334d;
+    padding-bottom: 1.2em;
+  }
+  .game-btn {
+    padding: 0.6em 1.4em;
+    font-size: 1em;
+    border: 2px solid #f6ad55;
+    border-radius: 6px;
+    background: transparent;
+    color: #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .game-btn:hover {
+    background: #2c2c44;
+  }
+  .game-btn.active {
+    background: #f6ad55;
+    color: #1e1e2f;
+    font-weight: bold;
+  }
+  .game-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  .game-panel.active {
+    display: flex;
+  }
+  h2 {
+    margin: 0 0 0.6em;
+  }
+  .mode-select {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1em;
+  }
+  .mode-btn {
+    padding: 0.5em 1.2em;
+    font-size: 0.95em;
+    border: 2px solid #4fd1c5;
+    border-radius: 6px;
+    background: transparent;
+    color: #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mode-btn:hover {
+    background: #2c2c44;
+  }
+  .mode-btn.active {
+    background: #4fd1c5;
+    color: #1e1e2f;
+    font-weight: bold;
+  }
+  .status {
+    margin-bottom: 1em;
+    font-size: 1.2em;
+    min-height: 1.5em;
+  }
+  .board {
+    display: grid;
+    gap: 8px;
+  }
+  #ttt-board {
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+  }
+  #hex-board {
+    grid-template-columns: repeat(3, 90px);
+    grid-template-rows: repeat(3, 90px);
+  }
+  .cell {
+    background: #2c2c44;
+    border: none;
+    border-radius: 8px;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .cell:hover:not(:disabled) {
+    background: #3d3d5c;
+  }
+  .cell:disabled {
+    cursor: default;
+  }
+  .cell.x {
+    color: #4fd1c5;
+  }
+  .cell.o {
+    color: #f6ad55;
+  }
+  .cell.win {
+    background: #4a5a3a;
+  }
+  .cell.selected {
+    background: #55557a;
+  }
+  .cell.w {
+    color: #f0f0f0;
+  }
+  .cell.b {
+    color: #f6ad55;
+  }
+  .cell.legal {
+    background: #3a4a3a;
+  }
+  .restart {
+    margin-top: 1.2em;
+    padding: 0.6em 1.4em;
+    font-size: 1em;
+    border: none;
+    border-radius: 6px;
+    background: #4fd1c5;
+    color: #1e1e2f;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .restart:hover {
+    background: #38b2ac;
+  }
+</style>
+</head>
+<body>
+
+<h1>Game Arcade</h1>
+
+<div id="game-menu">
+  <button class="game-btn" data-game="ttt">Tic Tac Toe</button>
+  <button class="game-btn" data-game="hex">Hexapawn</button>
+</div>
+
+<!-- ===== Tic Tac Toe ===== -->
+<div class="game-panel" id="panel-ttt">
+  <h2>Tic Tac Toe</h2>
+
+  <div class="mode-select" id="ttt-mode-select">
+    <button class="mode-btn" data-mode="pvp">2 Players</button>
+    <button class="mode-btn" data-mode="cpu">vs Computer</button>
+  </div>
+
+  <div class="status" id="ttt-status">Player X's turn</div>
+  <div class="board" id="ttt-board"></div>
+  <button class="restart" id="ttt-restart">Restart</button>
+</div>
+
+<!-- ===== Hexapawn ===== -->
+<div class="game-panel" id="panel-hex">
+  <h2>Hexapawn</h2>
+  <p style="max-width:360px; text-align:center; color:#b0b0c0; font-size:0.9em; margin-top:0;">
+    Pawns move forward one square, capture diagonally. Win by reaching the far row,
+    capturing all enemy pawns, or leaving your opponent with no legal move.
+  </p>
+
+  <div class="mode-select" id="hex-mode-select">
+    <button class="mode-btn" data-mode="pvp">2 Players</button>
+    <button class="mode-btn" data-mode="cpu">vs Computer</button>
+  </div>
+
+  <div class="mode-select" id="hex-starter-select" style="display:none;">
+    <button class="mode-btn" data-starter="human">You start</button>
+    <button class="mode-btn" data-starter="cpu">Computer starts</button>
+  </div>
+
+  <div class="status" id="hex-status">White's turn</div>
+  <div class="board" id="hex-board"></div>
+  <button class="restart" id="hex-restart">Restart</button>
+</div>
+
+<script>
+/* ============ Game menu switching ============ */
+const gameButtons = document.querySelectorAll('.game-btn');
+const gamePanels = document.querySelectorAll('.game-panel');
+
+function selectGame(game) {
+  gameButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.game === game));
+  gamePanels.forEach(panel => panel.classList.toggle('active', panel.id === `panel-${game}`));
+}
+
+gameButtons.forEach(btn => {
+  btn.addEventListener('click', () => selectGame(btn.dataset.game));
+});
+
+/* ============ Tic Tac Toe ============ */
+(function () {
+  const boardEl = document.getElementById('ttt-board');
+  const statusEl = document.getElementById('ttt-status');
+  const restartBtn = document.getElementById('ttt-restart');
+  const modeButtons = document.querySelectorAll('#ttt-mode-select .mode-btn');
+
+  let board = Array(9).fill(null);
+  let currentPlayer = 'X';
+  let gameOver = false;
+  let mode = 'pvp';
+  const HUMAN = 'X';
+  const CPU = 'O';
+
+  const WIN_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    board.forEach((val, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'cell' + (val ? ' ' + val.toLowerCase() : '');
+      btn.textContent = val || '';
+      const locked = mode === 'cpu' && currentPlayer !== HUMAN;
+      btn.disabled = !!val || gameOver || locked;
+      btn.addEventListener('click', () => handleMove(idx));
+      boardEl.appendChild(btn);
+    });
+  }
+
+  function handleMove(idx) {
+    if (board[idx] || gameOver) return;
+    if (mode === 'cpu' && currentPlayer !== HUMAN) return;
+
+    makeMove(idx, currentPlayer);
+
+    if (!gameOver && mode === 'cpu' && currentPlayer === CPU) {
+      renderBoard();
+      setTimeout(cpuMove, 350);
+    }
+  }
+
+  function makeMove(idx, player) {
+    board[idx] = player;
+
+    const winLine = checkWin(player);
+    if (winLine) {
+      gameOver = true;
+      statusEl.textContent = mode === 'cpu' && player === CPU
+        ? 'Computer wins!'
+        : `Player ${player} wins!`;
+      renderBoard();
+      highlightWin(winLine);
+      return;
+    }
+
+    if (board.every(cell => cell)) {
+      gameOver = true;
+      statusEl.textContent = "It's a draw!";
+      renderBoard();
+      return;
+    }
+
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    updateStatus();
+    renderBoard();
+  }
+
+  function updateStatus() {
+    if (mode === 'cpu') {
+      statusEl.textContent = currentPlayer === HUMAN ? 'Your turn (X)' : "Computer's turn (O)";
+    } else {
+      statusEl.textContent = `Player ${currentPlayer}'s turn`;
+    }
+  }
+
+  function cpuMove() {
+    if (gameOver) return;
+    const idx = bestMove();
+    if (idx !== -1) makeMove(idx, CPU);
+  }
+
+  function bestMove() {
+    let best = { score: -Infinity, idx: -1 };
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = CPU;
+        const score = minimax(board, 0, false);
+        board[i] = null;
+        if (score > best.score) {
+          best = { score, idx: i };
+        }
+      }
+    }
+    return best.idx;
+  }
+
+  function minimax(state, depth, isMaximizing) {
+    const winnerX = WIN_LINES.some(line => line.every(i => state[i] === HUMAN));
+    const winnerO = WIN_LINES.some(line => line.every(i => state[i] === CPU));
+    if (winnerO) return 10 - depth;
+    if (winnerX) return depth - 10;
+    if (state.every(cell => cell)) return 0;
+
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (!state[i]) {
+          state[i] = CPU;
+          best = Math.max(best, minimax(state, depth + 1, false));
+          state[i] = null;
+        }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (!state[i]) {
+          state[i] = HUMAN;
+          best = Math.min(best, minimax(state, depth + 1, true));
+          state[i] = null;
+        }
+      }
+      return best;
+    }
+  }
+
+  function checkWin(player) {
+    return WIN_LINES.find(line => line.every(i => board[i] === player)) || null;
+  }
+
+  function highlightWin(line) {
+    const cells = boardEl.children;
+    line.forEach(i => cells[i].classList.add('win'));
+  }
+
+  function restart() {
+    board = Array(9).fill(null);
+    currentPlayer = 'X';
+    gameOver = false;
+    updateStatus();
+    renderBoard();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    restart();
+  }
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
+
+  restartBtn.addEventListener('click', restart);
+
+  setMode('pvp');
+})();
+
+/* ============ Hexapawn ============ */
+(function () {
+  const boardEl = document.getElementById('hex-board');
+  const statusEl = document.getElementById('hex-status');
+  const restartBtn = document.getElementById('hex-restart');
+  const modeButtons = document.querySelectorAll('#hex-mode-select .mode-btn');
+  const starterSelect = document.getElementById('hex-starter-select');
+  const starterButtons = document.querySelectorAll('#hex-starter-select .mode-btn');
+
+  // 3x3 board, row 0 = top (Black's home... Black starts at row0, moves down)
+  // White starts at row2, moves up (toward row0).
+  const WHITE = 'w';
+  const BLACK = 'b';
+  const HUMAN = WHITE;
+  const CPU = BLACK;
+
+  let board = [];
+  let currentPlayer = WHITE;
+  let mode = 'pvp';
+  let starter = 'human'; // who moves first in 'cpu' mode
+  let gameOver = false;
+  let selected = null; // index of selected pawn (human's turn)
+
+  function initialBoard() {
+    return [
+      BLACK, BLACK, BLACK,
+      null,  null,  null,
+      WHITE, WHITE, WHITE
+    ];
+  }
+
+  function rc(idx) { return [Math.floor(idx / 3), idx % 3]; }
+  function idx(r, c) { return r * 3 + c; }
+  function inBounds(r, c) { return r >= 0 && r < 3 && c >= 0 && c < 3; }
+
+  // Returns list of {from, to, capture} moves for a given player on a given board
+  function movesFor(state, player) {
+    const moves = [];
+    const dir = player === WHITE ? -1 : 1;
+    const enemy = player === WHITE ? BLACK : WHITE;
+    for (let i = 0; i < 9; i++) {
+      if (state[i] !== player) continue;
+      const [r, c] = rc(i);
+      const fr = r + dir;
+      // forward move
+      if (inBounds(fr, c) && !state[idx(fr, c)]) {
+        moves.push({ from: i, to: idx(fr, c), capture: false });
+      }
+      // diagonal captures
+      for (const dc of [-1, 1]) {
+        const fc = c + dc;
+        if (inBounds(fr, fc) && state[idx(fr, fc)] === enemy) {
+          moves.push({ from: i, to: idx(fr, fc), capture: true });
+        }
+      }
+    }
+    return moves;
+  }
+
+  function applyMove(state, move, player) {
+    const next = state.slice();
+    next[move.to] = player;
+    next[move.from] = null;
+    return next;
+  }
+
+  // Check win: reached far row, or opponent has no pawns, or opponent has no moves.
+  // Returns 'w', 'b', or null. Evaluated as: after `player` just moved, check if `player` won.
+  function checkWinner(state, playerJustMoved) {
+    const opponent = playerJustMoved === WHITE ? BLACK : WHITE;
+
+    // reached far row
+    if (playerJustMoved === WHITE && state.slice(0, 3).includes(WHITE)) return WHITE;
+    if (playerJustMoved === BLACK && state.slice(6, 9).includes(BLACK)) return BLACK;
+
+    // opponent has no pawns
+    if (!state.includes(opponent)) return playerJustMoved;
+
+    // opponent has no legal moves
+    if (movesFor(state, opponent).length === 0) return playerJustMoved;
+
+    return null;
+  }
+
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    const legalTargets = selected !== null
+      ? movesFor(board, currentPlayer).filter(m => m.from === selected).map(m => m.to)
+      : [];
+
+    board.forEach((val, i) => {
+      const btn = document.createElement('button');
+      let cls = 'cell';
+      if (val === WHITE) cls += ' w';
+      if (val === BLACK) cls += ' b';
+      if (selected === i) cls += ' selected';
+      if (legalTargets.includes(i)) cls += ' legal';
+      btn.className = cls;
+      btn.textContent = val === WHITE ? '▲' : val === BLACK ? '▼' : '';
+      const locked = gameOver || (mode === 'cpu' && currentPlayer !== HUMAN);
+      btn.disabled = locked;
+      btn.addEventListener('click', () => handleClick(i));
+      boardEl.appendChild(btn);
+    });
+  }
+
+  function handleClick(i) {
+    if (gameOver) return;
+    if (mode === 'cpu' && currentPlayer !== HUMAN) return;
+
+    const legalMoves = movesFor(board, currentPlayer);
+
+    if (selected === null) {
+      if (board[i] === currentPlayer && legalMoves.some(m => m.from === i)) {
+        selected = i;
+        renderBoard();
+      }
+      return;
+    }
+
+    const move = legalMoves.find(m => m.from === selected && m.to === i);
+    if (move) {
+      makeMove(move);
+    } else if (board[i] === currentPlayer && legalMoves.some(m => m.from === i)) {
+      selected = i;
+      renderBoard();
+    } else {
+      selected = null;
+      renderBoard();
+    }
+  }
+
+  function makeMove(move) {
+    const player = currentPlayer;
+    board = applyMove(board, move, player);
+    selected = null;
+
+    const winner = checkWinner(board, player);
+    if (winner) {
+      gameOver = true;
+      statusEl.textContent = describeWinner(winner);
+      renderBoard();
+      return;
+    }
+
+    currentPlayer = currentPlayer === WHITE ? BLACK : WHITE;
+    updateStatus();
+    renderBoard();
+
+    if (mode === 'cpu' && currentPlayer === CPU && !gameOver) {
+      setTimeout(cpuMove, 350);
+    }
+  }
+
+  function describeWinner(winner) {
+    if (mode === 'cpu') {
+      return winner === HUMAN ? 'You win!' : 'Computer wins!';
+    }
+    return `${winner === WHITE ? 'White' : 'Black'} wins!`;
+  }
+
+  function updateStatus() {
+    if (gameOver) return;
+    if (mode === 'cpu') {
+      statusEl.textContent = currentPlayer === HUMAN ? 'Your turn (White)' : "Computer's turn (Black)";
+    } else {
+      statusEl.textContent = `${currentPlayer === WHITE ? "White's" : "Black's"} turn`;
+    }
+  }
+
+  function cpuMove() {
+    if (gameOver) return;
+    const moves = movesFor(board, CPU);
+    if (moves.length === 0) return; // shouldn't happen, would already be game over
+    let best = { score: -Infinity, move: moves[0] };
+    for (const m of moves) {
+      const next = applyMove(board, m, CPU);
+      const score = minimax(next, CPU, 0, false, m);
+      if (score > best.score) best = { score, move: m };
+    }
+    makeMove(best.move);
+  }
+
+  // Minimax over hexapawn's small game tree.
+  // `state` is the board AFTER the move that led here; `lastPlayer` is who just moved.
+  function minimax(state, lastPlayer, depth, isMaximizing) {
+    const winner = checkWinner(state, lastPlayer);
+    if (winner) {
+      const sign = winner === CPU ? 1 : -1;
+      return sign * (20 - depth);
+    }
+
+    const nextPlayer = lastPlayer === WHITE ? BLACK : WHITE;
+    const moves = movesFor(state, nextPlayer);
+
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (const m of moves) {
+        const next = applyMove(state, m, nextPlayer);
+        best = Math.max(best, minimax(next, nextPlayer, depth + 1, false));
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (const m of moves) {
+        const next = applyMove(state, m, nextPlayer);
+        best = Math.min(best, minimax(next, nextPlayer, depth + 1, true));
+      }
+      return best;
+    }
+  }
+
+  function restart() {
+    board = initialBoard();
+    currentPlayer = (mode === 'cpu' && starter === 'cpu') ? CPU : WHITE;
+    gameOver = false;
+    selected = null;
+    updateStatus();
+    renderBoard();
+
+    if (mode === 'cpu' && currentPlayer === CPU) {
+      setTimeout(cpuMove, 350);
+    }
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    starterSelect.style.display = mode === 'cpu' ? 'flex' : 'none';
+    restart();
+  }
+
+  function setStarter(newStarter) {
+    starter = newStarter;
+    starterButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.starter === starter));
+    restart();
+  }
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
+
+  starterButtons.forEach(btn => {
+    btn.addEventListener('click', () => setStarter(btn.dataset.starter));
+  });
+
+  restartBtn.addEventListener('click', restart);
+
+  setStarter('human');
+  setMode('pvp');
+})();
+
+selectGame('ttt');
+</script>
+
+</body>
+</html>
